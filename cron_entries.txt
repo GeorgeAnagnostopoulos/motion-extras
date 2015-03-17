@@ -1,0 +1,2 @@
+@daily /home/pi/bin/chkspace
+@reboot /home/pi/bin/motion -c /home/pi/bin/motion.conf

@@ -1,0 +1,61 @@
+#!/usr/bin/python
+import os
+import re
+import sys
+
+PERCENT_USED_COLUMN_NUMBER = 4 
+MOUNT_PATH_COLUMN_NUMBER = 5
+FILE_NAME_COLUMN_NUMBER = 8
+
+USED_PERCENT_UPPER_LIMIT = float(75)
+
+MOUNT_PATH = '/'
+VIDEO_PATH='/home/pi/m-video'
+
+# an oldie not used any more
+def getFreeSpace():
+    ''' checks for available disk space '''
+    st = os.statvfs(".")
+    return (st.f_bavail * st.f_frsize)
+
+def deltafree():
+    # free space as a percent of disk specified at MOUNT_PATH
+    rawdatafile = os.popen('df 2>/dev/null')
+    data = rawdatafile.readlines()
+    rawdatafile.close()
+    data = data[1:]
+    for line in data:
+        line = line[:-1]
+        line = re.sub('  *', ' ', line)
+        token = line.split(' ')
+        if token[MOUNT_PATH_COLUMN_NUMBER] == MOUNT_PATH:
+            return float(token[PERCENT_USED_COLUMN_NUMBER][:-1])
+           
+def freeDiskSpace():
+    # workhorse
+    if (deltafree() > USED_PERCENT_UPPER_LIMIT):
+        popen_command = "ls -ltr " + VIDEO_PATH + '/'
+        f = os.popen(popen_command)
+        data = f.readlines()
+        data = data[1:]
+        relay_counter = 0
+        for line in data:
+            line = line[:-1]
+            line = re.sub('  *', ' ', line)
+            image_file = line.split(' ')[FILE_NAME_COLUMN_NUMBER]
+            if image_file.endswith('.jpg') or image_file.endswith('.avi'):
+                file_to_remove = VIDEO_PATH + "/" + image_file
+                os.remove(file_to_remove)
+                relay_counter += 1
+                if relay_counter > 9:
+                    if deltafree() > USED_PERCENT_UPPER_LIMIT:
+                        relay_counter = 0
+                    else:
+                        return
+    
+def main():
+    # main function
+    freeDiskSpace()
+        
+if __name__=='__main__':
+    main()

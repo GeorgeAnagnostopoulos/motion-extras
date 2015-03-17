@@ -1,0 +1,49 @@
+#!/usr/bin/python
+import os.path
+import sys
+from datetime import datetime
+from time import time
+import logging
+from email.mime.text import MIMEText
+from email.mime.image import MIMEImage
+from email.header import Header
+from smtplib import SMTP_SSL
+
+SMTP_LOGIN='george.anagnostopoulos@yahoo.gr'
+SMTP_PASSWORD='capitalGeorge'
+SMTP_SERVER='smtp.mail.yahoo.com'
+SMTP_PORT=587
+EMAIL_RECIPIENT='anagnostopoulos.george@gmail.com'
+
+def main():
+
+    logging.basicConfig(filename='/home/pi/mmal/oneventend.log', level=logging.INFO)
+
+    timestamp=datetime.fromtimestamp(time()).strftime('%d/%m/%Y-%H:%M')  
+    message_body = 'Event ended at %s' % timestamp
+    logging.info(message_body)
+
+    msg = MIMEText(message_body)
+    msg['Subject']=Header('An Event', 'utf-8')
+    msg['From']=SMTP_LOGIN
+    msg['To']=EMAIL_RECIPIENT
+    
+#    image_file = sys.argv[1]
+    image_file=''
+    if not os.path.exists(image_file):
+        pass
+#        exit('Picture file does not exist[%s]' % image_file)
+    else: 
+        fp=open(image_file, 'rb')
+        img=MIMEImage(fp.read())
+        fp.close()  
+        msg.attach(img)
+
+    smtp_server = SMTP_SSL(SMTP_SERVER)
+    smtp_server.set_debuglevel(False)
+    smtp_server.login(SMTP_LOGIN, SMTP_PASSWORD)
+    smtp_server.sendmail(SMTP_LOGIN, EMAIL_RECIPIENT, msg.as_string())
+    smtp_server.quit()
+
+if __name__=='__main__':
+    main()
